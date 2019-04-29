@@ -4,20 +4,6 @@
     [clojure.java.io :as io]
     [cheshire.core :as cheshire]))
 
-(defn first-hand []
-  (->> (deck)
-       (shuffle)
-       (take 7)))
-
-(defn random-deck []
-  (->> (deck)
-       (shuffle)))
-
-(->> (map #(nth-type % 8) (repeatedly 10000 random-deck))
-     (frequencies)
-     (frequencies-to-percentages)
-     (map-values double))
-
 (defn map-values [f m]
   (into {} (for [[k v] m] [k (f v)])))
 
@@ -41,8 +27,6 @@
     (-> (filter #(= (keyword card-name) (first %)) db)
       (first)
     )))
-
-(get-card "Invert")
 
 
 (defn test-deck []
@@ -87,12 +71,53 @@
        (map generate-card-listings)
        (reduce concat)))
 
+
+(defn relevant-stats [card]
+  {
+    :name (:name card)
+    :types (:types card)
+;;     :colors (:colors card)
+;;     :colorIdentity (:colorIdentity card)
+   }
+  )
+
+(defn random-draw-list []
 (->> (build-deck (test-deck))
-    (shuffle)
-    (take 7))
+     (shuffle)
+     (map second)
+     (map relevant-stats)
+     ))
+
+(defn random-draw-indexed []
+(->> (random-draw-list)
+     (map :types)
+     (flatten)
+     (index-list-map)
+     ))
+
+(->>
+  (take 100 (repeatedly #(random-draw-indexed)))
+  (flatten)
+  (frequencies))
+
+
+
+
+(defn index-list-map [coll]
+  (index-list-map-rec coll, [], 1))
+
+
+(defn- index-list-map-rec [coll, x, ctr]
+  (if
+    (empty? coll) x
+    (index-list-map-rec (rest coll) (conj x {ctr, (first coll)}) (inc ctr))
+    ))
+(index-list-map-rec ["a","b","c"], [], 1)
+
 
 
 ;; general questions
+;; what does my mana curve look like?
 ;; how often can I play on curve?
 ;; what is the average composition of my first hand
 ;; how often will I run out of land on my way to 10?
